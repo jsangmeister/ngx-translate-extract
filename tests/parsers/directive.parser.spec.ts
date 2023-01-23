@@ -12,7 +12,6 @@ describe('DirectiveParser', () => {
 		parser = new DirectiveParser();
 	});
 
-
 	it('should extract keys when using literal map in bound attribute', () => {
 		const contents = `<div [translate]="{ key1: 'value1' | translate, key2: 'value2' | translate }"></div>`;
 		const keys = parser.extract(contents, templateFilename).keys();
@@ -169,5 +168,4 @@ describe('DirectiveParser', () => {
 		const keys = parser.extract(contents, templateFilename).keys();
 		expect(keys).to.deep.equal(['this is an example']);
 	});
-
 });
