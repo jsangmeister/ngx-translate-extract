@@ -99,9 +99,20 @@ export function findPropertyCallExpressions(node: Node, prop: string, fnName: st
 	if (Array.isArray(fnName)) {
 		fnName = fnName.join('|');
 	}
-	const query = `CallExpression > PropertyAccessExpression:has(Identifier[name=/^(${fnName})$/]):has(PropertyAccessExpression:has(Identifier[name="${prop}"]):has(ThisKeyword))`;
-	const nodes = tsquery<PropertyAccessExpression>(node, query).map((n) => n.parent as CallExpression);
-	return nodes;
+	const query = `CallExpression > PropertyAccessExpression:has(Identifier[name=/^(${fnName})$/]) > PropertyAccessExpression:has(ThisKeyword) > Identifier[name="${prop}"]`;
+	const nodes = tsquery<Identifier>(node, query);
+	// Since the direct descendant operator (>) is not supported in :has statements, we need to
+	// check manually whether everything is correctly matched
+	const filtered = nodes.reduce<CallExpression[]>((result, n) => {
+		if (
+			tsquery(n.parent, `PropertyAccessExpression > ThisKeyword`).length > 0 &&
+			tsquery(n.parent.parent, `PropertyAccessExpression > Identifier[name=/^(${fnName})$/]`).length > 0
+		) {
+			result.push(n.parent.parent.parent as CallExpression);
+		}
+		return result;
+	}, []);
+	return filtered;
 }
 
 export function getStringsFromExpression(expression: Expression): string[] {
